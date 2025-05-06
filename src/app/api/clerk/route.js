@@ -1,8 +1,8 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import connectDB from "@/config/db";
-import User from "@/model/User";
+import connectDB from "../../../config/db";
+import User from "../../../models/User";
 
 export async function POST(req) {
   try {
@@ -89,4 +89,4 @@ export async function POST(req) {
       { status: 500 }
     );
   }
-} 
+}
