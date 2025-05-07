@@ -11,21 +11,16 @@ export async function POST(req) {
     if (!WEBHOOK_SECRET) {
       throw new Error("Missing CLERK_WEBHOOK_SECRET");
     }
-
-    // Extract headers
     const headerPayload = headers();
     const svixHeaders = {
       "svix-id": headerPayload.get("svix-id"),
       "svix-timestamp": headerPayload.get("svix-timestamp"),
       "svix-signature": headerPayload.get("svix-signature"),
     };
-
-    // Validate headers
     if (!svixHeaders["svix-id"] || !svixHeaders["svix-timestamp"] || !svixHeaders["svix-signature"]) {
       console.error("❌ Missing svix headers");
       return NextResponse.json({ error: "Missing svix headers" }, { status: 400 });
     }
-
     const payload = await req.text();
     const webhook = new Webhook(WEBHOOK_SECRET);
 
