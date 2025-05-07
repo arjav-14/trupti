@@ -1,8 +1,10 @@
-import { Inter} from "next/font/google";
+'use client";'
+import { Inter } from "next/font/google";
 import "./globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
-import {Toaster} from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
+import { AppContextProvider } from "../Context/AppContext";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -18,15 +20,12 @@ export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${inter.variable} antialiased`}>
-         
-          <Toaster 
-            toastOptions={{
-              success: { style: {background: "black", color: "white"}},
-              error: { style: {background: "black", color: "white"}}
-            }}
-          />
-          {children}
+        <body className={inter.className}>
+          <AppContextProvider>
+          
+            <Toaster />
+            {children}
+          </AppContextProvider>
         </body>
       </html>
     </ClerkProvider>

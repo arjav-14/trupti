@@ -3,46 +3,51 @@ import Image from 'next/image';
 import Header from '../components/Header';
 import { useUser } from "@clerk/nextjs";
 import toast from 'react-hot-toast';
+import { useApp } from '../Context/AppContext'; // ✅ make sure path is correct
 
 const products = [
   { 
     name: 'Mango Pickle', 
     img: '/images/mango-pickle.jpg',
     price: '₹199',
-    description: 'Traditional raw mango pickle with aromatic spices'
+    description: 'Traditional raw mango pickle with aromatic spices',
+    _id: 'mango001' // ✅ temporary _id for testing
   },
   { 
     name: 'Lemon Pickle', 
     img: '/images/lemon-pickle.jpg',
     price: '₹149',
-    description: 'Tangy and spicy authentic lemon pickle'
+    description: 'Tangy and spicy authentic lemon pickle',
+    _id: 'lemon001'
   },
   { 
     name: 'Chili Pickle', 
     img: '/images/chili-pickle.jpg',
     price: '₹179',
-    description: 'Hot and spicy green chili pickle'
+    description: 'Hot and spicy green chili pickle',
+    _id: 'chili001'
   },
 ];
 
 export default function Home() {
   const { isSignedIn, user } = useUser();
+  const { addToCart } = useApp();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async (productId) => {
     if (!isSignedIn) {
       toast.error('Please sign in to add items to cart');
       return;
     }
-    
-    // Add to cart logic here
-    toast.success('Added to cart successfully!');
-  };
+
+    await addToCart(productId);
+    toast.success('Item added to cart!');
+  }; // ✅ fixed: added closing brace
 
   return (
-    <main className="min-h-screen bg-gradient-to-tr from-[#b5d16b] via-[#ae9e4f] via-[#957040] via-[#704936] via-[#432a27] via-[#482c29] via-[#4e2d2b] via-[#532f2d] via-[#8e533c] via-[#c08243] via-[#e3bb4a] to-[#f0fb5f]">
+    <main className="min-h-screen bg-gradient-to-tr from-[#b5d16b] to-[#f0fb5f]">
       <Header />
 
-      {/* Hero Section - removed gradient since it's in main */}
+      {/* Hero Section */}
       <section className="relative h-[80vh]">
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative h-full flex items-center justify-center">
@@ -55,9 +60,7 @@ export default function Home() {
             </p>
             <a 
               href="/products" 
-              className="inline-block bg-orange-600 text-white px-8 py-4 rounded-lg 
-                         font-semibold text-lg transform transition 
-                         hover:bg-orange-700 hover:scale-105"
+              className="inline-block bg-orange-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transform transition hover:bg-orange-700 hover:scale-105"
             >
               Shop Now
             </a>
@@ -65,7 +68,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Product Highlights - updated with auth check */}
+      {/* Product Highlights */}
       <section className="py-24 bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-4xl font-bold mb-12 text-center text-orange-800">
@@ -73,9 +76,7 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {products.map((product) => (
-              <div key={product.name} 
-                   className="bg-white rounded-2xl shadow-lg overflow-hidden 
-                              transform transition duration-300 hover:scale-105">
+              <div key={product._id} className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
                 <div className="relative h-64">
                   <Image
                     src={product.img}
@@ -90,7 +91,7 @@ export default function Home() {
                   <div className="flex justify-between items-center">
                     <span className="text-xl font-bold text-orange-800">{product.price}</span>
                     <button 
-                      onClick={handleAddToCart}
+                      onClick={() => handleAddToCart(product._id)}
                       className={`px-4 py-2 rounded-lg transition ${
                         isSignedIn 
                           ? 'bg-orange-600 hover:bg-orange-700 text-white' 
@@ -107,7 +108,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section - updated background */}
+      {/* Features Section */}
       <section className="py-20 bg-white/60 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-4xl font-bold mb-16 text-center text-orange-800">
@@ -123,12 +124,11 @@ export default function Home() {
               <h3 className="text-xl font-semibold mb-4 text-orange-700">Natural Ingredients</h3>
               <p className="text-gray-600">100% natural ingredients sourced from local farmers</p>
             </div>
-            {/* Add more features here */}
           </div>
         </div>
       </section>
 
-      {/* Contact CTA - updated background */}
+      {/* Contact CTA */}
       <section className="bg-black/20 backdrop-blur-sm py-16">
         <div className="max-w-4xl mx-auto text-center px-4">
           <h2 className="text-3xl font-bold mb-4 text-white">Have Questions?</h2>
@@ -137,9 +137,7 @@ export default function Home() {
           </p>
           <a 
             href="/contact" 
-            className="inline-block bg-white text-orange-700 px-8 py-4 rounded-lg 
-                     font-semibold transform transition 
-                     hover:bg-gray-100 hover:scale-105"
+            className="inline-block bg-white text-orange-700 px-8 py-4 rounded-lg font-semibold transform transition hover:bg-gray-100 hover:scale-105"
           >
             Contact Us
           </a>

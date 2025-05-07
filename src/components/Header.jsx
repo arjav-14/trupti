@@ -1,3 +1,4 @@
+'use client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
@@ -22,6 +23,12 @@ function Header() {
               className="text-gray-700 hover:text-gray-900"
             >
               Products
+            </Link>
+            <Link 
+              href="/cart" 
+              className="text-gray-700 hover:text-gray-900"
+            >
+             Cart 
             </Link>
             <Link 
               href="/about" 

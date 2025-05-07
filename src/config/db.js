@@ -1,41 +1,28 @@
 import mongoose from "mongoose";
 
-const connectDB = async () => {
-    try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        console.log(`MongoDB connected successfully: ${conn.connection.host}`);
-    } catch (err) {
-        console.error("Error connecting to DB:", err.message);
-        process.exit(1);  // Exit process with failure
-    }
+let isConnected = false;
+
+export default async function connectDB() {
+  if (isConnected) return;
+
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      dbName: "truptifoodz", // Database name must match what's in the URI
+      retryWrites: true, // Enables retryable writes
+      w: "majority", // Wait for the majority of nodes to acknowledge the write
+    });
+
+    isConnected = true;
+    console.log("✅ MongoDB connected");
+  } catch (err) {
+    console.error("❌ Error connecting to DB:", err.message);
+  }
+
+  // Add the following to ensure the connection is open
+  mongoose.connection.on('open', () => {
+    console.log('MongoDB connection is open');
+  });
+  mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
+  });
 }
-
-// Handling connection events
-mongoose.connection.on("connected", () => {
-    console.log("Mongoose connected to DB");
-});
-
-mongoose.connection.on("error", (err) => {
-    console.error("Mongoose connection error:", err.message);
-});
-
-mongoose.connection.on("disconnected", () => {
-    console.log("Mongoose connection is disconnected");
-});
-
-// Handle process termination
-process.on("SIGINT", async () => {
-    try {
-        await mongoose.connection.close();
-        console.log("Mongoose connection closed through app termination");
-        process.exit(0);
-    } catch (err) {
-        console.error("Error closing Mongoose connection:", err.message);
-        process.exit(1);
-    }
-});
-
-export default connectDB;
