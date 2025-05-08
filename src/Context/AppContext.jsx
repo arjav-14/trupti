@@ -104,7 +104,7 @@
 //   }
 //   return context;
 // }
-
+'use client';
 import { createContext, useContext, useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import toast from "react-hot-toast";
