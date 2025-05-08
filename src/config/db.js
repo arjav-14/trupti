@@ -1,5 +1,4 @@
-
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -14,20 +13,22 @@ if (!cached) {
 }
 
 export async function connectToDB() {
-  // If already connected, return the cached connection
   if (cached.conn) {
     console.log("✅ Reusing existing MongoDB connection");
     return cached.conn;
   }
 
   if (!cached.promise) {
-    console.log("🔗 Establishing new MongoDB connection...");
+    console.log("🔗 Connecting to MongoDB...");
     cached.promise = mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     }).then((mongooseInstance) => {
-      console.log("✅ MongoDB connection established");
+      console.log("✅ MongoDB connected");
       return mongooseInstance;
+    }).catch((err) => {
+      console.error("❌ MongoDB connection error:", err);
+      throw err;
     });
   }
 
