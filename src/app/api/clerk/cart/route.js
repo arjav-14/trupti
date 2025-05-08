@@ -1,8 +1,9 @@
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import connectDB from "../../../config/db";
-import User from "../../../models/User";
+import connectDB from '../../../../../../config/db';
+import User from '../../../../../../models/User';
+import Product from '../../../../../../models/Product';
 
 // Get Cart
 export async function GET(req) {
@@ -12,7 +13,7 @@ export async function GET(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
+    await connectDB(); // Ensure DB connection
 
     const user = await User.findOne({ clerkId: userId }).populate("cart.productId");
 
@@ -41,7 +42,11 @@ export async function POST(req) {
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
     }
 
-    await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return NextResponse.json({ error: "Invalid Product ID" }, { status: 400 });
+    }
+
+    await connectDB(); // Ensure DB connection
 
     let user = await User.findOne({ clerkId: userId });
 
