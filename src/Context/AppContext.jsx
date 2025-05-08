@@ -23,7 +23,7 @@ export function AppContextProvider({ children }) {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/cart');
+      const response = await axios.get('/api/clerk/cart');
       setCart(response.data.cart);
     } catch (error) {
       toast.error('Failed to fetch cart');
@@ -41,7 +41,7 @@ export function AppContextProvider({ children }) {
 
     try {
       setLoading(true);
-      const response = await axios.post('/api/cart', { productId });
+      const response = await axios.post('/api/clerk/cart', { productId });
       setCart(response.data.cart);
       toast.success('Added to cart!');
     } catch (error) {
@@ -55,7 +55,7 @@ export function AppContextProvider({ children }) {
   const removeFromCart = async (productId) => {
     try {
       setLoading(true);
-      const response = await axios.delete(`/api/cart/${productId}`);
+      const response = await axios.delete(`/api/clerk/cart/${productId}`);
       setCart(response.data.cart);
       toast.success('Removed from cart!');
     } catch (error) {
@@ -69,7 +69,7 @@ export function AppContextProvider({ children }) {
   const updateQuantity = async (productId, quantity) => {
     try {
       setLoading(true);
-      const response = await axios.put(`/api/cart/${productId}`, { quantity });
+      const response = await axios.put(`/api/clerk/cart/${productId}`, { quantity });
       setCart(response.data.cart);
       toast.success('Cart updated!');
     } catch (error) {
