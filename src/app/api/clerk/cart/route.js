@@ -1,9 +1,10 @@
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import connectDB from "../../../../config/db"; 
+import { connectToDB } from "../../../../config/db";  // Corrected import
 import User from "../../../../models/User";  
 import Product from "../../../../models/Product";  
+
 // Get Cart
 export async function GET(req) {
   try {
@@ -12,7 +13,7 @@ export async function GET(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB(); // Ensure DB connection
+    await connectToDB();  // Corrected function name
 
     const user = await User.findOne({ clerkId: userId }).populate("cart.productId");
 
@@ -45,18 +46,15 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid Product ID" }, { status: 400 });
     }
 
-    await connectDB(); // Ensure DB connection
+    await connectToDB();  // Corrected function name
 
     let user = await User.findOne({ clerkId: userId });
 
     if (!user) {
-      // Optional: Add email if available
       user = await User.create({ clerkId: userId, email: "", cart: [] });
     }
 
-    const existingItem = user.cart.find((item) =>
-      item.productId.equals(productId)
-    );
+    const existingItem = user.cart.find((item) => item.productId.equals(productId));
 
     if (existingItem) {
       existingItem.quantity += 1;
