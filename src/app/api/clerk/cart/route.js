@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuth } from 'node_modules/@clerk/nextjs/server';
+import { getAuth } from '@clerk/nextjs/server';
 import connectDB from '../../../../config/db';
 import User from '../../../../models/User';
 import Product from '../../../../models/Product';
