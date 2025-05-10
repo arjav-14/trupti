@@ -1,7 +1,7 @@
 import { getAuth } from "@clerk/nextjs/server";
-import { connectToDB } from "../../../../config/db"; // ✅ Corrected import name
-import User from "../../../../models/User";           // ✅ Corrected model path
-import Product from "../../../../models/Product";     // ✅ Corrected model path
+import { connectToDB } from "../../../../config/db"; 
+import User from "../../../../models/User";           
+import Product from "../../../../models/Product";   
 import { NextResponse } from "next/server";
 
 // GET: Fetch Cart Items

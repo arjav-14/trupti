@@ -163,16 +163,23 @@ const products = [
 export default function Home() {
   const { isSignedIn } = useUser();
   const { addToCart } = useApp();
-
   const handleAddToCart = async (productId) => {
     if (!isSignedIn) {
       toast.error('Please sign in to add items to cart');
       return;
     }
-
-    await addToCart(productId);
-    toast.success('Item added to cart!');
+  
+    const result = await addToCart(productId);
+    if (!result.success) {
+      console.log('[handleAddToCart] Add failed');
+     
+      return;
+    }
+  
+    console.log('[handleAddToCart] Add successful');
+   
   };
+  
 
   return (
     <main className="min-h-screen bg-gradient-to-tr from-[#b5d16b] to-[#f0fb5f]">
