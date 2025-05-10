@@ -75,9 +75,9 @@
 //   }
 // }
 import { getAuth } from "@clerk/nextjs/server";
-import connectDB from "../../../../../config/db"; // Corrected path
-import User from "../../../../../models/User";      // Corrected path
-import Product from "../../../../../models/Product"; // Corrected path
+import connectDB from "../../../../config/db"; // Corrected path
+import User from "../../../../models/User";      // Corrected path
+import Product from "../../../../models/Product"; // Corrected path
 import { NextResponse } from "next/server";
 
 // GET: Fetch Cart
