@@ -324,6 +324,7 @@ import axios from 'axios';
 const AppContext = createContext();
 
 export function AppContextProvider({ children }) {
+  const[products, setProducts] = useState([]);
   const { isSignedIn, user } = useUser();
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -335,7 +336,15 @@ export function AppContextProvider({ children }) {
       setCart([]);
     }
   }, [isSignedIn]);
-
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get('/api/clerk/product');
+      setProducts(res.data.products);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      toast.error('Failed to fetch products');
+    }
+  };
   const fetchCart = async () => {
     try {
       setLoading(true);

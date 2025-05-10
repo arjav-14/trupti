@@ -147,39 +147,98 @@
 //   );
 // }
 
+// 'use client';
+// import Image from 'next/image';
+// import Header from '../components/Header';
+// import { useUser } from "@clerk/nextjs";
+// import toast from 'react-hot-toast';
+// import { useApp } from '../Context/AppContext';
+
+// const products = [
+//   { name: 'Mango Pickle', img: '/images/mango-pickle.jpg', price: '₹199', description: 'Traditional raw mango pickle with aromatic spices', _id: 'mango001' },
+//   { name: 'Lemon Pickle', img: '/images/lemon-pickle.jpg', price: '₹149', description: 'Tangy and spicy authentic lemon pickle', _id: 'lemon001' },
+//   { name: 'Chili Pickle', img: '/images/chili-pickle.jpg', price: '₹179', description: 'Hot and spicy green chili pickle', _id: 'chili001' },
+// ];
+
+// export default function Home() {
+//   const { isSignedIn } = useUser();
+//   const { addToCart } = useApp();
+//   const handleAddToCart = async (productId) => {
+//     if (!isSignedIn) {
+//       toast.error('Please sign in to add items to cart');
+//       return;
+//     }
+  
+//     const result = await addToCart(productId);
+//     if (!result.success) {
+//       console.log('[handleAddToCart] Add failed');
+     
+//       return;
+//     }
+  
+//     console.log('[handleAddToCart] Add successful');
+   
+//   };
+  
+
+//   return (
+//     <main className="min-h-screen bg-gradient-to-tr from-[#b5d16b] to-[#f0fb5f]">
+//       <Header />
+//       <section className="py-24 bg-white/80 backdrop-blur-sm">
+//         <div className="max-w-7xl mx-auto px-4">
+//           <h2 className="text-4xl font-bold mb-12 text-center text-orange-800">Our Bestsellers</h2>
+//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+//             {products.map((product) => (
+//               <div key={product._id} className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
+//                 <div className="relative h-64">
+//                   <Image src={product.img} alt={product.name} fill className="object-cover" />
+//                 </div>
+//                 <div className="p-6">
+//                   <h3 className="text-2xl font-semibold mb-2 text-orange-700">{product.name}</h3>
+//                   <p className="text-gray-600 mb-4">{product.description}</p>
+//                   <div className="flex justify-between items-center">
+//                     <span className="text-xl font-bold text-orange-800">{product.price}</span>
+//                     <button 
+//                       onClick={() => handleAddToCart(product._id)}
+//                       className={`px-4 py-2 rounded-lg transition ${isSignedIn ? 'bg-orange-600 hover:bg-orange-700 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+//                     >
+//                       {isSignedIn ? 'Add to Cart' : 'Sign in to Buy'}
+//                     </button>
+//                   </div>
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//       </section>
+//     </main>
+//   );
+// }
+
+
 'use client';
 import Image from 'next/image';
 import Header from '../components/Header';
-import { useUser } from "@clerk/nextjs";
 import toast from 'react-hot-toast';
 import { useApp } from '../Context/AppContext';
 
-const products = [
-  { name: 'Mango Pickle', img: '/images/mango-pickle.jpg', price: '₹199', description: 'Traditional raw mango pickle with aromatic spices', _id: 'mango001' },
-  { name: 'Lemon Pickle', img: '/images/lemon-pickle.jpg', price: '₹149', description: 'Tangy and spicy authentic lemon pickle', _id: 'lemon001' },
-  { name: 'Chili Pickle', img: '/images/chili-pickle.jpg', price: '₹179', description: 'Hot and spicy green chili pickle', _id: 'chili001' },
-];
-
 export default function Home() {
-  const { isSignedIn } = useUser();
-  const { addToCart } = useApp();
+  const { isSignedIn, addToCart, products } = useApp(); 
+
   const handleAddToCart = async (productId) => {
-    if (!isSignedIn) {
-      toast.error('Please sign in to add items to cart');
-      return;
-    }
-  
+    console.log('[handleAddToCart] Attempting to add product:', productId);
+    
     const result = await addToCart(productId);
+
     if (!result.success) {
-      console.log('[handleAddToCart] Add failed');
-     
+      console.log('[handleAddToCart] Add failed:', result.message);
+      toast.error('Failed to add to cart. Please try again.');
       return;
     }
-  
-    console.log('[handleAddToCart] Add successful');
-   
+
+    console.log('[handleAddToCart] Add successful:', result);
+    toast.success('Product added to cart!');
   };
-  
 
   return (
     <main className="min-h-screen bg-gradient-to-tr from-[#b5d16b] to-[#f0fb5f]">
@@ -197,10 +256,11 @@ export default function Home() {
                   <h3 className="text-2xl font-semibold mb-2 text-orange-700">{product.name}</h3>
                   <p className="text-gray-600 mb-4">{product.description}</p>
                   <div className="flex justify-between items-center">
-                    <span className="text-xl font-bold text-orange-800">{product.price}</span>
+                    <span className="text-xl font-bold text-orange-800">₹{product.price}</span>
                     <button 
                       onClick={() => handleAddToCart(product._id)}
                       className={`px-4 py-2 rounded-lg transition ${isSignedIn ? 'bg-orange-600 hover:bg-orange-700 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+                      disabled={!isSignedIn}
                     >
                       {isSignedIn ? 'Add to Cart' : 'Sign in to Buy'}
                     </button>
