@@ -457,7 +457,7 @@ export function AppContextProvider({ children }) {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('/api/products'); // Not /api/clerk/products
+      const res = await axios.get('/api/clerk/product'); // Not /api/clerk/products
       setProducts(res.data.products);
     } catch (err) {
       console.error('Error fetching products:', err);
