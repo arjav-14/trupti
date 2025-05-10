@@ -240,6 +240,9 @@ export default function Home() {
     toast.success('Product added to cart!');
   };
 
+  // Ensure products is an array before calling map
+  const displayProducts = Array.isArray(products) ? products : [];
+
   return (
     <main className="min-h-screen bg-gradient-to-tr from-[#b5d16b] to-[#f0fb5f]">
       <Header />
@@ -247,7 +250,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-4xl font-bold mb-12 text-center text-orange-800">Our Bestsellers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products.map((product) => (
+            {displayProducts.map((product) => (
               <div key={product._id} className="bg-white rounded-2xl shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
                 <div className="relative h-64">
                   <Image src={product.img} alt={product.name} fill className="object-cover" />
