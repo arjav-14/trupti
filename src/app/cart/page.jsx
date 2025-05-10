@@ -52,7 +52,7 @@ import React from 'react';
 import { useApp } from '../../Context/AppContext';
 
 const CartPage = () => {
-  const { cart, loading, removeFromCart, isSignedIn } = useApp();
+  const { cart, loading, removeFromCart, updateQuantity, isSignedIn } = useApp();
 
   if (!isSignedIn) {
     return <p className="p-6 text-red-500">Please sign in to view your cart.</p>;
@@ -63,29 +63,56 @@ const CartPage = () => {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
+
       {cart.length === 0 ? (
-        <p>Your cart is empty.</p>
+        <p className="text-gray-600">Your cart is empty.</p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="space-y-6">
           {cart.map((item, index) => (
-            <li key={index} className="border p-4 rounded flex items-center space-x-4">
+            <li
+              key={index}
+              className="flex items-center gap-6 border rounded-lg p-4 shadow-sm"
+            >
               <img
                 src={item.image}
                 alt={item.name}
-                className="w-16 h-16 object-cover"
+                className="w-20 h-20 object-cover rounded"
               />
               <div className="flex-1">
-                <h2 className="text-lg font-semibold">{item.name}</h2>
-                <p className="text-gray-600">{item.description}</p>
-                <p className="text-gray-600">Qty: {item.quantity}</p>
-                <p className="text-gray-800 font-medium">Price: ₹{item.price}</p>
+                <h2 className="text-xl font-semibold">{item.name}</h2>
+                <p className="text-sm text-gray-500">{item.description}</p>
+                <div className="mt-2 flex items-center gap-3">
+                  <span className="text-gray-700 font-medium">₹{item.price}</span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        item.quantity > 1
+                          ? updateQuantity(item.productId, item.quantity - 1)
+                          : removeFromCart(item.productId)
+                      }
+                      className="px-2 py-1 border rounded text-gray-700 hover:bg-gray-100"
+                    >
+                      -
+                    </button>
+                    <span className="min-w-[24px] text-center">{item.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                      className="px-2 py-1 border rounded text-gray-700 hover:bg-gray-100"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
               </div>
               <button
-                type="button" // ✅ prevents page reload
+                type="button"
                 onClick={() => removeFromCart(item.productId)}
-                className="text-red-500 hover:underline"
+                className="text-red-500 hover:underline text-sm"
               >
                 Remove
               </button>
