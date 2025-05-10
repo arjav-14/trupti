@@ -54,6 +54,12 @@ import { useApp } from '../../Context/AppContext';
 const CartPage = () => {
   const { cart, loading, removeFromCart, updateQuantity, isSignedIn } = useApp();
 
+  // Calculate total
+  const totalPrice = cart.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
+
   if (!isSignedIn) {
     return <p className="p-6 text-red-500">Please sign in to view your cart.</p>;
   }
@@ -63,17 +69,17 @@ const CartPage = () => {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
 
       {cart.length === 0 ? (
         <p className="text-gray-600">Your cart is empty.</p>
       ) : (
-        <ul className="space-y-6">
+        <div className="space-y-6">
           {cart.map((item, index) => (
-            <li
+            <div
               key={index}
-              className="flex items-center gap-6 border rounded-lg p-4 shadow-sm"
+              className="flex items-center gap-6 border rounded-lg p-4 shadow-sm bg-white"
             >
               <img
                 src={item.image}
@@ -84,9 +90,10 @@ const CartPage = () => {
                 <h2 className="text-xl font-semibold">{item.name}</h2>
                 <p className="text-sm text-gray-500">{item.description}</p>
                 <div className="mt-2 flex items-center gap-3">
-                  <span className="text-gray-700 font-medium">₹{item.price}</span>
-
-                  <div className="flex items-center gap-2">
+                  <span className="text-gray-700 font-medium">
+                    ₹{item.price * item.quantity}
+                  </span>
+                  <div className="flex items-center gap-2 ml-6">
                     <button
                       type="button"
                       onClick={() =>
@@ -98,7 +105,9 @@ const CartPage = () => {
                     >
                       -
                     </button>
-                    <span className="min-w-[24px] text-center">{item.quantity}</span>
+                    <span className="min-w-[24px] text-center font-medium">
+                      {item.quantity}
+                    </span>
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.productId, item.quantity + 1)}
@@ -116,9 +125,22 @@ const CartPage = () => {
               >
                 Remove
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
+
+          {/* Total and Checkout */}
+          <div className="flex justify-between items-center pt-6 border-t mt-8">
+            <p className="text-xl font-semibold">
+              Total: ₹{totalPrice.toFixed(2)}
+            </p>
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded shadow"
+              onClick={() => alert('Proceeding to checkout...')}
+            >
+              Proceed to Checkout
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
