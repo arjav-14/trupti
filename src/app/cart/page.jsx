@@ -80,10 +80,10 @@ const CartPage = () => {
                 <h2 className="text-lg font-semibold">{item.name}</h2>
                 <p className="text-gray-600">{item.description}</p>
                 <p className="text-gray-600">Qty: {item.quantity}</p>
-                {/* ✅ Added Price Display */}
                 <p className="text-gray-800 font-medium">Price: ₹{item.price}</p>
               </div>
               <button
+                type="button" // ✅ prevents page reload
                 onClick={() => removeFromCart(item.productId)}
                 className="text-red-500 hover:underline"
               >
