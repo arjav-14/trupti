@@ -75,7 +75,7 @@
 //   }
 // }
 import { getAuth } from "@clerk/nextjs/server";
-import connectDB from "../../../../config/db"; // Corrected path
+import { connectToDB } from "../../../../config/db"; // Corrected import path
 import User from "../../../../models/User";      // Corrected path
 import Product from "../../../../models/Product"; // Corrected path
 import { NextResponse } from "next/server";
@@ -89,7 +89,7 @@ export async function GET(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
+    await connectToDB(); // Updated function name
 
     let user = await User.findOne({ clerkId: userId }).populate("cart.productId");
 
@@ -97,10 +97,10 @@ export async function GET(req) {
       user = await User.create({ clerkId: userId, email: "", cart: [] });
     }
 
-    return NextResponse.json({ cart: user.cart || [] }, { status: 200 });
+    return NextResponse.json({ success: true,cart: user.cart || [] }, { status: 200 });
   } catch (error) {
     console.error("GET Cart Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ success: false , error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -119,7 +119,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
     }
 
-    await connectDB();
+    await connectToDB(); // Updated function name
 
     let user = await User.findOne({ clerkId: userId });
     if (!user) {
