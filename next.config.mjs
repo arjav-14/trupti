@@ -8,23 +8,28 @@ const nextConfig = {
         
     },
     eslint: {
-    ignoreDuringBuilds: true, // Only use during deve
-  },
+        ignoreDuringBuilds: true,
+    },
     images: {
-    domains: ['via.placeholder.com'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
-      },
-    ],
-  },
+        domains: ['via.placeholder.com'],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'via.placeholder.com',
+            },
+        ],
+    },
     experimental: {
         serverActions: {
-            allowedOrigins: ['localhost:3000'],
+            allowedOrigins: [
+                'localhost:3000',
+                'trupti-mauve.vercel.app',
+                'trupti-git-master-arjavs-projects-8d0c162c.vercel.app',
+                'trupti-7fiyastni-arjavs-projects-8d0c162c.vercel.app'
+            ],
             bodySizeLimit: '2mb'
         }
     }
-  }
-  
-  export default nextConfig
+}
+
+export default nextConfig
