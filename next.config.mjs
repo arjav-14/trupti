@@ -8,7 +8,7 @@ const nextConfig = {
         
     },
     eslint: {
-    ignoreDuringBuilds: true, // Only use during development
+    ignoreDuringBuilds: true, // Only use during deve
   },
     images: {
     domains: ['via.placeholder.com'],
