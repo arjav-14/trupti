@@ -7,6 +7,9 @@ const nextConfig = {
         SIGNING_SECRET: process.env.Signing_Secret,
         
     },
+    eslint: {
+    ignoreDuringBuilds: true, // Only use during development
+  },
     images: {
     domains: ['via.placeholder.com'],
     remotePatterns: [

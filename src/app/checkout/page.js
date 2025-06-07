@@ -25,7 +25,7 @@ export default function CheckoutPage() {
     if (!cart.length) {
       router.push('/');
     }
-  }, [isSignedIn, cart]);
+  }, [isSignedIn, cart, router]); // Added router to dependencies
 
   const initializeRazorpay = () => {
     return new Promise((resolve) => {
