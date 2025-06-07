@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { connectToDB } from '../../../../../config/db';
 import Order from '../../../../../models/Orders';
+import Product from '../../../../../models/Product';
+import { sendOrderConfirmationEmail } from '../../../../../utils/mailer';
 
 export async function POST(req) {
   try {
@@ -66,8 +68,22 @@ export async function POST(req) {
 
     console.log('Creating order with payload:', orderPayload);
 
+    // Create the order
     const order = await Order.create(orderPayload);
-    
+
+    // Populate product details
+    const populatedOrder = await Order.findById(order._id)
+      .populate({
+        path: 'items.productId',
+        model: 'Product',
+        select: 'name price image'
+      });
+
+    console.log('Populated order:', JSON.stringify(populatedOrder, null, 2));
+
+    // Send email with populated data
+    await sendOrderConfirmationEmail(populatedOrder);
+
     // Verify order was created
     const savedOrder = await Order.findById(order._id);
     console.log('Order saved successfully:', savedOrder);
