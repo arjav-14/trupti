@@ -1,246 +1,107 @@
-// import { getAuth } from "@clerk/nextjs/server";
-// import { NextResponse } from "next/server";
-// import mongoose from "mongoose";
-// import connectDB from "../../../../config/db"; 
-// import User from "../../../../models/User";  
-// import Product from "../../../../models/Product";  
-
-// // Get Cart
-// export async function GET(req) {
-//   try {
-//     const { userId } = getAuth(req);
-//     if (!userId) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     await connectDB(); // Ensure DB connection
-
-//     const user = await User.findOne({ clerkId: userId }).populate("cart.productId");
-
-//     if (!user) {
-//       return NextResponse.json({ error: "User not found" }, { status: 404 });
-//     }
-
-//     return NextResponse.json({ cart: user.cart || [] });
-//   } catch (error) {
-//     console.error("Error fetching cart:", error);
-//     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-//   }
-// }
-
-// // Add to Cart
-// export async function POST(req) {
-//   try {
-//     const { userId } = getAuth(req);
-//     if (!userId) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const { productId } = await req.json();
-
-//     if (!productId) {
-//       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
-//     }
-
-//     if (!mongoose.Types.ObjectId.isValid(productId)) {
-//       return NextResponse.json({ error: "Invalid Product ID" }, { status: 400 });
-//     }
-
-//     await connectDB(); // Ensure DB connection
-
-//     let user = await User.findOne({ clerkId: userId });
-
-//     if (!user) {
-//       // Optional: Add email if available
-//       user = await User.create({ clerkId: userId, email: "", cart: [] });
-//     }
-
-//     const existingItem = user.cart.find((item) =>
-//       item.productId.equals(productId)
-//     );
-
-//     if (existingItem) {
-//       existingItem.quantity += 1;
-//     } else {
-//       user.cart.push({ productId: mongoose.Types.ObjectId(productId), quantity: 1 });
-//     }
-
-//     await user.save();
-//     await user.populate("cart.productId");
-
-//     return NextResponse.json({ cart: user.cart });
-//   } catch (error) {
-//     console.error("Error adding to cart:", error);
-//     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-//   }
-// }
-
-//perfect//
-// import { getAuth } from "@clerk/nextjs/server";
-// import { connectToDB } from "../../../../config/db"; // Corrected import path
-// import User from "../../../../models/User";      // Corrected path
-// import Product from "../../../../models/Product"; // Corrected path
-// import { NextResponse } from "next/server";
-
-// // GET: Fetch Cart
-// export async function GET(req) {
-//   try {
-//     const { userId } = getAuth(req);
-
-//     if (!userId) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     await connectToDB(); // Updated function name
-
-//     let user = await User.findOne({ clerkId: userId }).populate("cart.productId");
-
-//     if (!user) {
-//       user = await User.create({ clerkId: userId, email: "", cart: [] });
-//     }
-
-//     return NextResponse.json({ success: true,cart: user.cart || [] }, { status: 200 });
-//   } catch (error) {
-//     console.error("GET Cart Error:", error);
-//     return NextResponse.json({ success: false , error: "Internal Server Error" }, { status: 500 });
-//   }
-// }
-
-// // POST: Add to Cart
-// export async function POST(req) {
-//   try {
-//     const { userId } = getAuth(req);
-
-//     if (!userId) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const { productId } = await req.json();
-
-//     if (!productId) {
-//       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
-//     }
-
-//     await connectToDB(); // Updated function name
-
-//     let user = await User.findOne({ clerkId: userId });
-//     if (!user) {
-//       user = await User.create({ clerkId: userId, email: "", cart: [] });
-//     }
-
-//     const product = await Product.findById(productId);
-//     if (!product) {
-//       return NextResponse.json({ error: "Product not found" }, { status: 404 });
-//     }
-
-//     const existingItem = user.cart.find((item) =>
-//       item.productId.equals(productId)
-//     );
-
-//     if (existingItem) {
-//       existingItem.quantity += 1;
-//     } else {
-//       user.cart.push({ productId, quantity: 1 });
-//     }
-
-//     await user.save();
-//     await user.populate("cart.productId");
-
-//     return NextResponse.json({ cart: user.cart }, { status: 200 });
-//   } catch (error) {
-//     console.error("POST Cart Error:", error);
-//     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-//   }
-// }
-
-
 import { getAuth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 import { connectToDB } from "../../../../config/db";
 import User from "../../../../models/User";
-import Product from "../../../../models/Product";
-import { NextResponse } from "next/server";
 
-// Utility to format cart items with product info
-const formatCartItems = (cart) =>
-  cart.map((item) => ({
-    productId: item.productId._id,
-    name: item.productId.name,
-    price: item.productId.price,
-    image: item.productId.image,
-    description: item.productId.description,
-    quantity: item.quantity,
-  }));
+const formatCartItems = (cart) => {
+  return cart.map((item) => {
+    // Check if productId exists and is populated
+    if (!item.productId) {
+      return null;
+    }
 
-// GET: Fetch Cart
+    return {
+      productId: item.productId._id || item.productId,
+      name: item.productId.name || '',
+      price: item.productId.price || 0,
+      image: item.productId.image || '',
+      quantity: item.quantity || 1
+    };
+  }).filter(Boolean); // Remove any null items
+};
+
 export async function GET(req) {
   try {
     const { userId } = getAuth(req);
-
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" }, 
+        { status: 401 }
+      );
     }
 
     await connectToDB();
-
-    let user = await User.findOne({ clerkId: userId }).populate("cart.productId");
+    const user = await User.findOne({ clerkId: userId }).populate('cart.productId');
 
     if (!user) {
-      user = await User.create({ clerkId: userId, email: "", cart: [] });
+      return NextResponse.json({ cart: [] });
     }
 
-    const cartItems = formatCartItems(user.cart);
+    const formattedCart = formatCartItems(user.cart);
+    return NextResponse.json({ success: true, cart: formattedCart });
 
-    return NextResponse.json({ success: true, cart: cartItems }, { status: 200 });
   } catch (error) {
     console.error("GET Cart Error:", error);
-    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch cart" },
+      { status: 500 }
+    );
   }
 }
 
-// POST: Add to Cart
 export async function POST(req) {
   try {
     const { userId } = getAuth(req);
-
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const { productId } = await req.json();
-
     if (!productId) {
-      return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Product ID is required" },
+        { status: 400 }
+      );
     }
 
     await connectToDB();
-
     let user = await User.findOne({ clerkId: userId });
 
     if (!user) {
-      user = await User.create({ clerkId: userId, email: "", cart: [] });
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
     }
 
-    const product = await Product.findById(productId);
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
+    // Find if product already exists in cart
+    const existingItemIndex = user.cart.findIndex(
+      item => item.productId.toString() === productId
+    );
 
-    const existingItem = user.cart.find((item) => item.productId.equals(productId));
-
-    if (existingItem) {
-      existingItem.quantity += 1;
+    if (existingItemIndex > -1) {
+      // Increment quantity if product exists
+      user.cart[existingItemIndex].quantity += 1;
     } else {
+      // Add new product to cart
       user.cart.push({ productId, quantity: 1 });
     }
 
     await user.save();
-    await user.populate("cart.productId");
+    // Populate cart items after saving
+    await user.populate('cart.productId');
 
-    const cartItems = formatCartItems(user.cart);
+    const formattedCart = formatCartItems(user.cart);
+    return NextResponse.json({ success: true, cart: formattedCart });
 
-    return NextResponse.json({ success: true, cart: cartItems }, { status: 200 });
   } catch (error) {
     console.error("POST Cart Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Failed to update cart" },
+      { status: 500 }
+    );
   }
 }

@@ -31,6 +31,12 @@ function Header() {
              Cart 
             </Link>
             <Link 
+              href="/my-orders" 
+              className="text-gray-700 hover:text-gray-900"
+            >
+             My Order 
+            </Link>
+            <Link 
               href="/about" 
               className="text-gray-700 hover:text-gray-900"
             >

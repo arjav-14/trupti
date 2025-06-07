@@ -7,6 +7,15 @@ const nextConfig = {
         SIGNING_SECRET: process.env.Signing_Secret,
         
     },
+    images: {
+    domains: ['via.placeholder.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
+    ],
+  },
     experimental: {
         serverActions: {
             allowedOrigins: ['localhost:3000'],

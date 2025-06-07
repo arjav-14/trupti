@@ -4,7 +4,7 @@ import Product from '../../../../models/Product';
 export async function GET() {
   try {
     await connectToDB();
-    const products = await Product.find();
+    const products = await Product.find({}).lean();
     return Response.json({ products }, { status: 200 });
   } catch (error) {
     console.error('GET /api/products error:', error);
