@@ -8,15 +8,30 @@ const AppContext = createContext();
 
 // Helper function to get base URL
 const getBaseUrl = () => {
-  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
-    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
   }
-  return 'http://localhost:3000';
+  return process.env.NEXT_PUBLIC_VERCEL_URL 
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : 'http://localhost:3000';
 };
 
+// Create axios instance with interceptors
 const axiosInstance = axios.create({
   baseURL: getBaseUrl(),
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
+
+// Add response interceptor for error handling
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
+    throw error;
+  }
+);
 
 export function AppContextProvider({ children }) {
   const [products, setProducts] = useState([]);
@@ -24,10 +39,12 @@ export function AppContextProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Fetch products on mount
   useEffect(() => {
     fetchProducts();
   }, []);
 
+  // Fetch cart when user signs in
   useEffect(() => {
     if (isSignedIn) {
       fetchCart();
@@ -39,11 +56,19 @@ export function AppContextProvider({ children }) {
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      console.log('Fetching products from:', `${getBaseUrl()}/api/clerk/product`);
       const res = await axiosInstance.get('/api/clerk/product');
+      
+      if (!res.data?.products) {
+        throw new Error('No products found in response');
+      }
+      
+      console.log('Products fetched:', res.data.products);
       setProducts(res.data.products);
     } catch (err) {
       console.error('Error fetching products:', err);
       toast.error('Failed to fetch products');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -54,8 +79,15 @@ export function AppContextProvider({ children }) {
     
     try {
       setLoading(true);
+      console.log('Fetching cart...');
       const response = await axiosInstance.get('/api/clerk/cart');
-      setCart(response.data.cart || []);
+      
+      if (!response.data?.cart) {
+        throw new Error('Invalid cart data received');
+      }
+      
+      console.log('Cart fetched:', response.data.cart);
+      setCart(response.data.cart);
     } catch (error) {
       console.error('Error fetching cart:', error);
       toast.error('Failed to fetch cart');
@@ -73,15 +105,20 @@ export function AppContextProvider({ children }) {
 
     try {
       setLoading(true);
-      const response = await axiosInstance.post('/api/clerk/cart', { productId });
+      console.log('Adding to cart:', productId);
+      const response = await axiosInstance.post('/api/clerk/cart', { 
+        productId,
+        quantity: 1
+      });
       
-      if (response.data.success) {
-        setCart(response.data.cart);
-        toast.success('Added to cart!');
-        return { success: true };
-      } else {
-        throw new Error(response.data.message || 'Failed to add to cart');
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to add to cart');
       }
+      
+      console.log('Cart updated:', response.data.cart);
+      setCart(response.data.cart);
+      toast.success('Added to cart!');
+      return { success: true };
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error(error.message || 'Failed to add item to cart');
@@ -142,7 +179,8 @@ export function AppContextProvider({ children }) {
     updateQuantity,
     isSignedIn,
     user,
-    fetchCart, // Exposing fetchCart for manual refresh if needed
+    fetchCart,
+    fetchProducts, // Adding fetchProducts for manual refresh
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
