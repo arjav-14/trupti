@@ -4,111 +4,81 @@ import { connectToDB } from '../../../../config/db';
 import Order from '../../../../models/Orders';
 import User from '../../../../models/User';
 
-export async function GET(req) {
+export async function GET(request) {
+  console.group('Orders API Request');
   try {
-    const { userId } = getAuth(req);
-    
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    await connectToDB();
-    
-    const orders = await Order.find({ userId })
-      .populate('items.productId')
-      .sort({ createdAt: -1 });
-
-    return NextResponse.json({
-      success: true,
-      orders: orders.map(order => ({
-        _id: order._id,
-        status: order.status,
-        totalAmount: order.totalAmount,
-        createdAt: order.createdAt,
-        shippingAddress: order.shippingAddress,
-        items: order.items.map(item => ({
-          _id: item.productId._id,
-          name: item.productId.name,
-          price: item.productId.price,
-          image: item.productId.image,
-          quantity: item.quantity
-        }))
-      }))
+    // Log auth details
+    const auth = getAuth(request);
+    console.log('Auth details:', {
+      userId: auth.userId,
+      sessionId: auth.sessionId
     });
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch orders' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(req) {
-  try {
-    const { userId } = getAuth(req);
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    
+    if (!auth.userId) {
+      console.log('Authentication failed: No userId');
+      console.groupEnd();
+      return Response.json({ 
+        success: false, 
+        error: 'Authentication required' 
+      }, { 
+        status: 401 
+      });
     }
 
-    const { items, totalAmount, shippingAddress } = await req.json();
-
-    if (!items || !totalAmount || !shippingAddress) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
+    // Log database connection attempt
+    console.log('Connecting to database...');
     await connectToDB();
+    console.log('Database connected successfully');
 
-    // Create the order
-    const order = await Order.create({
-      userId,
-      items,
-      totalAmount,
-      shippingAddress,
-      status: 'pending'
+    // Log query parameters
+    console.log('Query parameters:', {
+      userId: auth.userId,
+      sort: { createdAt: -1 }
+    });
+    
+    // Execute query with error handling
+    const orders = await Order.find({ userId: auth.userId })
+      .sort({ createdAt: -1 })
+      .populate('items.productId', 'name image')
+      .lean()
+      .catch(err => {
+        console.error('Database query error:', err);
+        throw err;
+      });
+
+    // Log query results
+    console.log('Query results:', {
+      ordersFound: orders?.length || 0,
+      firstOrderId: orders?.[0]?._id,
+      sampleOrder: orders?.[0] ? {
+        totalAmount: orders[0].totalAmount,
+        itemsCount: orders[0].items?.length,
+        status: orders[0].status
+      } : null
     });
 
-    // Populate the order items
-    await order.populate('items.productId');
-
-    // Clear the user's cart after successful order
-    await User.findOneAndUpdate(
-      { clerkId: userId },
-      { $set: { cart: [] } }
-    );
-
-    return NextResponse.json({
-      success: true,
-      order: {
-        _id: order._id,
-        status: order.status,
-        totalAmount: order.totalAmount,
-        createdAt: order.createdAt,
-        shippingAddress: order.shippingAddress,
-        items: order.items.map(item => ({
-          _id: item.productId._id,
-          name: item.productId.name,
-          price: item.price,
-          image: item.productId.image,
-          quantity: item.quantity
-        }))
-      }
+    console.groupEnd();
+    return Response.json({ 
+      success: true, 
+      orders 
     });
 
   } catch (error) {
-    console.error('Error creating order:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to create order' },
-      { status: 500 }
-    );
+    console.error('Orders API error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    
+    console.groupEnd();
+    return Response.json({ 
+      success: false, 
+      error: 'Failed to fetch orders',
+      details: error.message,
+      code: error.code
+    }, { 
+      status: 500 
+    });
   }
 }

@@ -1,24 +1,13 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
 const AppContext = createContext();
 
-// Helper function to get base URL
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return window.location.origin;
-  }
-  return process.env.NEXT_PUBLIC_VERCEL_URL 
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : 'http://localhost:3000';
-};
-
-// Create axios instance with interceptors
 const axiosInstance = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,16 +24,15 @@ axiosInstance.interceptors.response.use(
 
 export function AppContextProvider({ children }) {
   const [products, setProducts] = useState([]);
-  const { isSignedIn, user } = useUser();
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { isSignedIn, user } = useUser();
 
-  // Fetch products on mount
+  // Initialize data on mount and auth changes
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // Fetch cart when user signs in
   useEffect(() => {
     if (isSignedIn) {
       fetchCart();
@@ -56,18 +44,16 @@ export function AppContextProvider({ children }) {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      console.log('Fetching products from:', `${getBaseUrl()}/api/clerk/product`);
-      const res = await axiosInstance.get('/api/clerk/product');
+      const response = await axiosInstance.get('/clerk/product');
       
-      if (!res.data?.products) {
-        throw new Error('No products found in response');
+      if (!response.data?.products) {
+        throw new Error('No products found');
       }
       
-      console.log('Products fetched:', res.data.products);
-      setProducts(res.data.products);
-    } catch (err) {
-      console.error('Error fetching products:', err);
-      toast.error('Failed to fetch products');
+      setProducts(response.data.products);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('Failed to load products');
       setProducts([]);
     } finally {
       setLoading(false);
@@ -79,25 +65,37 @@ export function AppContextProvider({ children }) {
     
     try {
       setLoading(true);
-      console.log('Fetching cart...');
-      const response = await axiosInstance.get('/api/clerk/cart');
+      const response = await axiosInstance.get('/clerk/cart');
       
-      if (!response.data?.cart) {
-        throw new Error('Invalid cart data received');
+      if (response.data?.success) {
+        const formattedCart = response.data.cart.map(item => ({
+          productId: item.productId,
+          name: item.name,
+          image: item.image,
+          quantity: item.quantity,
+          variant: {
+            weight: {
+              value: item.variant.weight.value,
+              unit: item.variant.weight.unit || 'g'
+            },
+            price: item.variant.price
+          },
+          totalPrice: item.variant.price * item.quantity
+        }));
+        setCart(formattedCart);
+      } else {
+        throw new Error(response.data?.message || 'Failed to fetch cart');
       }
-      
-      console.log('Cart fetched:', response.data.cart);
-      setCart(response.data.cart);
     } catch (error) {
       console.error('Error fetching cart:', error);
-      toast.error('Failed to fetch cart');
+      toast.error('Failed to load cart');
       setCart([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const addToCart = async (productId) => {
+  const addToCart = async (productId, variantWeight) => {
     if (!isSignedIn) {
       toast.error('Please sign in to add items to cart');
       return { success: false, message: 'Not signed in' };
@@ -105,62 +103,92 @@ export function AppContextProvider({ children }) {
 
     try {
       setLoading(true);
-      console.log('Adding to cart:', productId);
-      const response = await axiosInstance.post('/api/clerk/cart', { 
-        productId,
-        quantity: 1
-      });
+      const product = products.find(p => p._id === productId);
       
+      if (!product) {
+        throw new Error('Product not found');
+      }
+
+      const selectedVariant = product.variants.find(
+        v => v.weight.value === Number(variantWeight)
+      );
+
+      if (!selectedVariant) {
+        throw new Error('Invalid variant selected');
+      }
+
+      const payload = {
+        productId,
+        variant: {
+          weight: selectedVariant.weight,
+          price: selectedVariant.price
+        },
+        quantity: 1
+      };
+
+      const response = await axiosInstance.post('/clerk/cart', payload);
+
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Failed to add to cart');
       }
-      
-      console.log('Cart updated:', response.data.cart);
-      setCart(response.data.cart);
-      toast.success('Added to cart!');
+
+      await fetchCart(); // Refresh cart after adding
+      // toast.success('Added to cart!');
       return { success: true };
+
     } catch (error) {
       console.error('Error adding to cart:', error);
-      toast.error(error.message || 'Failed to add item to cart');
+      toast.error(error.message || 'Failed to add to cart');
       return { success: false, message: error.message };
     } finally {
       setLoading(false);
     }
   };
 
-  const removeFromCart = async (productId) => {
-    if (!isSignedIn) return;
-
-    try {
-      setLoading(true);
-      const response = await axiosInstance.delete(`/api/clerk/cart/${productId}`);
-      
-      if (response.data.success) {
-        setCart(response.data.cart);
-        toast.success('Removed from cart!');
-      } else {
-        throw new Error(response.data.message || 'Failed to remove from cart');
-      }
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-      toast.error(error.message || 'Failed to remove item from cart');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateQuantity = async (productId, quantity) => {
+  const updateQuantity = async (productId, variantWeight, quantity) => {
     if (!isSignedIn || quantity < 1) return;
 
     try {
       setLoading(true);
-      const response = await axiosInstance.put(`/api/clerk/cart/${productId}`, { quantity });
       
-      if (response.data.success) {
-        setCart(response.data.cart);
-        toast.success('Cart updated!');
+      // Log request data
+      console.log('Update quantity request:', { productId, variantWeight, quantity });
+      
+      const response = await axiosInstance.put(`/clerk/cart/${productId}`, {
+        variantWeight,
+        quantity
+      });
+
+      console.log('Cart update response:', response.data); // Add this log
+
+      if (response.data?.success) {
+        // Add null checks and validation
+        const formattedCart = response.data.cart.map(item => {
+          if (!item?.variant?.weight) {
+            console.error('Invalid cart item structure:', item);
+            return null;
+          }
+
+          return {
+            productId: item.productId,
+            name: item.name || 'Unknown Product',
+            image: item.image || '/placeholder.jpg',
+            quantity: item.quantity || 1,
+            variant: {
+              weight: {
+                value: item.variant.weight.value || 0,
+                unit: item.variant.weight.unit || 'g'
+              },
+              price: item.variant.price || 0
+            },
+            totalPrice: (item.variant.price || 0) * (item.quantity || 1)
+          };
+        }).filter(Boolean); // Remove any null items
+
+        setCart(formattedCart);
+        toast.success('Cart updated');
       } else {
-        throw new Error(response.data.message || 'Failed to update cart');
+        throw new Error(response.data?.message || 'Failed to update cart');
       }
     } catch (error) {
       console.error('Error updating cart:', error);
@@ -170,7 +198,37 @@ export function AppContextProvider({ children }) {
     }
   };
 
-  const value = {
+  const removeFromCart = async (productId, variantWeight) => {
+    if (!isSignedIn) return;
+
+    try {
+      setLoading(true);
+      const response = await axiosInstance.delete(`/clerk/cart/${productId}`, {
+        data: { variantWeight }
+      });
+
+      if (response.data?.success) {
+        await fetchCart(); // Refresh cart after removal
+        toast.success('Item removed from cart');
+      } else {
+        throw new Error(response.data?.message || 'Failed to remove item');
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      toast.error(error.message || 'Failed to remove item');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateCartTotal = (cartItems) => {
+    return cartItems.reduce((total, item) => {
+      const itemTotal = (item.variant?.price || 0) * (item.quantity || 0);
+      return total + itemTotal;
+    }, 0);
+  };
+
+  const value = useMemo(() => ({
     cart,
     loading,
     products,
@@ -180,8 +238,9 @@ export function AppContextProvider({ children }) {
     isSignedIn,
     user,
     fetchCart,
-    fetchProducts, // Adding fetchProducts for manual refresh
-  };
+    fetchProducts,
+    cartTotal: calculateCartTotal(cart)
+  }), [cart, loading, products, isSignedIn, user]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

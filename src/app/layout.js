@@ -5,6 +5,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "react-hot-toast";
 import { AppContextProvider } from "../Context/AppContext";
+import Script from "next/script";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -22,7 +23,11 @@ export default function RootLayout({ children }) {
       <html lang="en">
         <body className={inter.className}>
           <AppContextProvider>
-          
+            <Script
+              id="razorpay-checkout-js"
+              src="https://checkout.razorpay.com/v1/checkout.js"
+              strategy="beforeInteractive"
+            />
             <Toaster />
             {children}
           </AppContextProvider>

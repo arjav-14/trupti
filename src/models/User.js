@@ -11,7 +11,15 @@ const cartItemSchema = new mongoose.Schema({
     default: 1,
     min: 1,
   },
+  variant: {
+    weight: {
+      value: Number,
+      unit: String,
+    },
+    price: Number,
+  }
 });
+
 
 const userSchema = new mongoose.Schema({
   clerkId: { type: String, required: true, unique: true },
